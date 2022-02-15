@@ -26,6 +26,5 @@ urlpatterns = [
     path('', include('rango.urls')),
     path('admin/', admin.site.urls),
     # The above maps any URLs starting with rango/ to be handled by rango.
-    path('', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
