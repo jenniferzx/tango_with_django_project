@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rango' ,
+    'rango',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.media', # Check/add this line!
 
             ],
+        # 'libraries':{'rango_template_tags':'rango.templatetags.rango_template_tags'},
         },
     },
 ]
