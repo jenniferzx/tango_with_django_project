@@ -2,6 +2,7 @@ from telnetlib import STATUS
 from django.urls import URLPattern, path
 from rango import views
 
+
 app_name ='rango'
 
 urlpatterns = [

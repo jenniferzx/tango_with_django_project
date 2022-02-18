@@ -11,9 +11,10 @@ from rango.forms import UserForm, UserProfileForm
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
 # from django.contrib.auth import logout
+from datetime import datetime
 
 # def index(request):
-#     return HttpResponse("Rango says hey there partner!" + r"<a href='/rango/about/'>About</a>")
+# return HttpResponse("Rango says hey there partner!" + r"<a href='/rango/about/'>About</a>")
 
 
 def index(request):
@@ -25,23 +26,64 @@ def index(request):
     # Retrieve the top 5 only -- or all if less than 5.
     # Place the list in our context_dict dictionary (with our boldmessage!)
     # that will be passed to the template engine.
+
     category_list = Category.objects.order_by('-likes')[0:5]
     page_list = Page.objects.order_by('-views')[0:5]
-    # context_dict={}
-    context_dict = {'boldmessage':'Crunchy, creamy, cookie, candy, cupcake!','categories':category_list,'pages':page_list}
-    # context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
-    # context_dict['categories'] = category_list
-    # context_dict['pages']=page_list
+    context_dict={}
+    # context_dict = {'boldmessage':'Crunchy, creamy, cookie, candy, cupcake!','categories':category_list,'pages':page_list}
+    context_dict['boldmessage'] = 'Crunchy, creamy, cookie, candy, cupcake!'
+    context_dict['categories'] = category_list
+    context_dict['pages']=page_list
     # Render the response and send it back!
-    return render(request, 'rango/index.html', context=context_dict)
+    # return render(request, 'rango/index.html', context=context_dict)
 
+    # Obtain our Response object early so we can add cookie information. 
+    # response = render(request, 'rango/index.html', context=context_dict)
+    # Call the helper function to handle the cookies 
+    response = render(request, 'rango/index.html', context=context_dict)
+    # Return response back to the user, updating any cookies that need changed. 
+    visitor_cookie_handler(request)
+    return response
+
+
+
+# def about(request):
+#     # Construct a dictionary to pass to the template engine as its context. # Note the key boldmessage matches to {{ boldmessage }} in the template!
+#     context_dict = {
+#         'boldmessage': 'This tutorial has been put together by Xian Zhang'}
+#     # Return a rendered response to send to the client. # We make use of the shortcut function to make our lives easier. # Note that the first parameter is the template we wish to use.
+#     return render(request, 'rango/about.html', context=context_dict)
 
 def about(request):
-    # Construct a dictionary to pass to the template engine as its context. # Note the key boldmessage matches to {{ boldmessage }} in the template!
-    context_dict = {
-        'boldmessage': 'This tutorial has been put together by Xian Zhang'}
-    # Return a rendered response to send to the client. # We make use of the shortcut function to make our lives easier. # Note that the first parameter is the template we wish to use.
-    return render(request, 'rango/about.html', context=context_dict)
+    # print(request.method)
+    # print(request.user)
+
+    # category_list = Category.objects.order_by('-likes')[:5]
+    # page_list = Page.objects.order_by('-views')[:5]
+    # context_dict = {'categories': category_list, 'pages': page_list}
+
+    category_list = Category.objects.order_by('-likes')[0:5]
+    page_list = Page.objects.order_by('-views')[0:5]
+    context_dict = {'boldmessage':'This tutorial has been put together by Xian Zhang','categories':category_list,'pages':page_list}
+
+
+    # Call the helper function that handles the cookies
+    
+    
+    visitor_cookie_handler(request)
+    # Get the response object in advance so that you can add cookies
+    context_dict['visits'] = request.session['visits']
+    response = render(request,'rango/about.html',context = context_dict)
+    
+    # Return a response object, update the target cookies
+    return response
+
+
+
+
+
+    # return render(request, 'rango/about.html', {})
+
 
 #use decorate machine to limit
 @login_required
@@ -230,4 +272,35 @@ def user_logout(request):
     # Take the user back to the homepage.
     return redirect(reverse('rango:index'))
 
+# a helper method
+def get_server_side_cookie(request, cookie, default_val=None):
+    val = request.session.get(cookie)
+    if not val:
+        val = default_val
+    return val
+
+# updated the function defination
+# def visitor_cookie_handler(request, response):
+def visitor_cookie_handler(request):
+    # Get the number of visits to the site.
+    # We use the COOKIES.get() function to obtain the visits cookie.
+    # If the cookie exists, the value returned is casted to an integer.
+    # If the cookie doesn't exist, then the default value of 1 is used.
+    visits = int(get_server_side_cookie(request,'visits','1'))
+    last_visit_cookie = get_server_side_cookie(request,'last_visit',str(datetime.now()))
+    last_visit_time = datetime.strptime(last_visit_cookie[:-7],
+                                        '%Y-%m-%d %H:%M:%S')
+    # If it's been more than a day since the last visit...
+    if (datetime.now() - last_visit_time).days > 0:
+        visits = visits + 1
+    # Update the last visit cookie now that we have updated the count
+        # response.set_cookie('last_visit', str(datetime.now()))
+        request.session['last_visit'] = str(datetime.now())
+    else:
+        # Set the last visit cookie
+        # response.set_cookie('last_visit', last_visit_cookie)
+        request.session['last_visit'] = last_visit_cookie
+    # Update/set the visits cookie
+    # response.set_cookie('visits', visits)
+    request.session['visits'] = visits
 
